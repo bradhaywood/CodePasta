@@ -1,0 +1,171 @@
+<style type="text/css">
+    .fullScreen .fullScreen-editor{ 
+       height: auto!important;
+       width: auto!important;
+       border: 0;
+        margin: 0;
+        position: fixed !important;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        z-index: 9998
+    }
+        
+    .fullScreen {
+        overflow: hidden
+    }
+</style>
+
+<div class="row">
+<div class="col-sm-12">
+  <h3 id="paste-name"><% IF paste %><% paste.name %><% ELSE %>New Paste<% END %></h3>
+  <% IF paste %><h6>Brought upon an unexpecting world <% paste.date_created %></h6><% END %>
+</div>
+</div>
+<div class="row">
+<div class="col-sm-12">
+  <div class="pull-right">
+    <div class="btn-group">
+      <a href="<% c.uri_for(c.controller('Root').action_for('raw'), paste.id) %>" target="_blanK" class="btn btn-default"><i class="glyphicon glyphicon-download-alt"></i> Raw</a>
+      <button type="button" class="btn btn-default zoom-div"><i class="glyphicon glyphicon-search"></i> Zoom</button>
+    </div>
+  </div>
+</div>
+</div>
+<div class="row">
+<div class="col-sm-12">
+  <pre id="editor">
+    <% IF paste %><% paste.code %><% END %>
+  </pre>
+  <div id="fullscreen-menu">Use Ctrl+M to zoom back in</div>
+</div>
+</div>
+<div class="col-sm-12">
+  <form class="form-horizontal" role="form" method="post" action="<% c.uri_for('/') %>" parsley-validate>
+    <div class="form-group">
+      <label for="title" class="col-sm-2 control-label">Title</label>
+      <div class="col-sm-10">
+        <input type="text" name="title" class="form-control" id="title" placeholder="Paste title" value="<% IF paste %><% paste.name %><% END %>" required>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="syntax" class="col-sm-2 control-label">Syntax</label>
+      <div class="col-sm-10">
+        <select name="syntax" id="syntax" class="form-control">
+          <% FOREACH syntax IN syntax_rs %>
+            <option value="<% syntax.value %>" <% IF paste %><% IF paste.syntax == syntax.value %>SELECTED<% END %><% END %>><% syntax.name %></option>
+          <% END %>
+       </select>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <div class="col-sm-offset-2 col-sm-10">
+        <button class="btn btn-primary" type="submit" value="submit" name="<% IF paste %>update<% ELSE %>submit<% END %>"><% IF paste %>Save!<% ELSE %>Paste!<% END %></button>
+      </div>
+    </div>
+    <textarea style="display:none" id="code" name="code"><% IF paste %><% paste.code %><% END %></textarea>
+    <% IF paste %><input type="hidden" name="pid" value="<% paste.id %>"><% END %>
+  </form>
+</div>
+
+<script type="text/javascript" charset="utf-8">
+$(function() {
+    var editor = ace.edit("editor"),
+        editor_div = document.getElementById('editor'),
+        doc        = editor.getSession().getDocument(),
+
+        pasteName  = $('#paste-name'),
+        codeInput  = $('#code'),
+        fullScreenMenu = $('#fullscreen-menu'),
+        $fullScreen = false;
+
+    editor.setTheme("ace/theme/monokai");
+    <% IF paste %>
+        editor.getSession().setMode("ace/mode/<% paste.syntax %>");
+    <% ELSE %>
+        editor.getSession().setMode("ace/mode/plain_text");
+    <% END %>
+    //editor.getSession().setMode("ace/mode/javascript");
+    editor.setAutoScrollEditorIntoView();
+    editor.setOption("maxLines", 100);
+    editor.setShowPrintMargin(false);
+    editor.focus(); 
+
+    // when user starts typing
+    editor.on('change', function () {
+        // assuming a line height of 16 pixels...
+        editor_div.style.height = 16 * doc.getLength() + 'px';
+        editor.resize();
+        codeInput.text(editor.getSession().getValue());
+    });
+
+    editor.commands.addCommand({
+        name: "fullscreen",
+        bindKey: {win: "Ctrl-M", mac: "Command-Option-M"},
+        exec: function(editor) {
+            var dom = ace.require("ace/lib/dom");
+            var commands = ace.require("ace/commands/default_commands").commands;
+
+            // add command for all new editors
+            if ($fullScreen) {
+                dom.removeCssClass(document.body, "fullScreen");
+                dom.removeCssClass(editor.container, "fullScreen-editor");
+                editor.resize();
+                fullScreenMenu.css('display', 'none');
+                $fullScreen = false;
+            }
+            else {
+                dom.toggleCssClass(document.body, "fullScreen");
+                dom.toggleCssClass(editor.container, "fullScreen-editor");
+                editor.resize();
+                fullScreenMenu.css('display', 'block');
+                $fullScreen = true;
+            }
+       }
+    });
+
+    editor.commands.addCommand({
+        name: "save",
+        bindKey: {win: "Ctrl-S", mac: "Command-Option-S"},
+        exec: function(editor) {
+            var dom = ace.require("ace/lib/dom");
+            var commands = ace.require("ace/commands/default_commands").commands;
+            
+            <% IF paste %>
+                var win = window.open("<% c.uri_for(c.controller('Root').action_for('raw'), paste.id) %>", '_blank');
+                win.focus();
+            <% ELSE %>
+                alert("You can't download a paste that does not exist");
+            <% END %>
+        }
+    });
+
+    fullScreenMenu.click(function() {
+        editor.commands.exec("fullscreen", editor);
+    });
+
+    $('.zoom-div').click(function() {
+        editor.commands.exec("fullscreen", editor);
+    });
+
+    $('#syntax').change(function() {
+        editor.getSession().setMode("ace/mode/" + $(this).val());
+    });
+
+    $('#theme').change(function() {
+        editor.setTheme("ace/theme/" + $(this).val());
+    });
+
+    $('#title').keyup(function() {
+        var val = $(this).val();
+        if (val)
+            pasteName.text(val);
+        else
+            pasteName.text("New Paste");
+    });
+
+});
+</script>

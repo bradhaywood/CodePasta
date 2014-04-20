@@ -1,0 +1,18 @@
+<% IF results %>
+<div class="col-sm-12">
+    Found <strong><% results.count %></strong> result<% IF results.count > 1 %>s<% END %>
+    <br />
+    <div class="well">
+    <ul>
+        <% WHILE (row = results.next) %>
+            <li><a href="/<% row.id %>"><% row.name %></a> - Created <% row.date_created %></li>
+        <% END %>
+    </ul>
+    </div>
+</div>
+<% ELSE %>
+<div class="col-sm-12">
+        <h2>Awwwww! I'm sorry</h2>
+        <h5>but no pastes live here</h5>
+</div>
+<% END %>
