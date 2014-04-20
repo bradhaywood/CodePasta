@@ -9,11 +9,16 @@ use Module::Install::Catalyst; # Complain loudly if you don't have
 name 'CodePasta';
 all_from 'lib/CodePasta.pm';
 
-build_requires 'inc::Module::Install';
 requires 'Catalyst::Runtime' => '5.90040';
 requires 'Catalyst::Plugin::ConfigLoader';
 requires 'Catalyst::Plugin::Static::Simple';
 requires 'Catalyst::Action::RenderView';
+requires 'Catalyst::Plugin::Session::State::Cookie';
+requires 'Catalyst::Plugin::Session::Store::FastMmap';
+requires 'Catalyst::View::TT::Alloy';
+requires 'Catalyst::View::JSON';
+requires 'Catalyst::Model::DBIC::Schema';
+requires 'DateTime';
 requires 'Moose';
 requires 'namespace::autoclean';
 requires 'Config::General'; # This should reflect the config file format you've chosen
